@@ -701,56 +701,11 @@ int scanhash_scrypt(int thr_id, uint32_t *pdata,
 	uint32_t midstate[8];
 	uint32_t n = pdata[19] - 1;
 	const uint32_t Htarg = ptarget[7];
-	int throughput = scrypt_best_throughput();
+	int throughput = 4;
 	int i;
 	
-#ifdef HAVE_SHA256_4WAY
-	if (sha256_use_4way())
-		throughput *= 4;
-#endif
-	
-	for (i = 0; i < throughput; i++)
-		memcpy(data + i * 20, pdata, 80);
-	
-	sha256_init(midstate);
-	sha256_transform(midstate, data, 0);
-	
-	do {
-		for (i = 0; i < throughput; i++)
-			data[i * 20 + 19] = ++n;
-		
-#if defined(HAVE_SHA256_4WAY)
-		if (throughput == 4)
-			scrypt_1024_1_1_256_4way(data, hash, midstate, scratchbuf, N);
-		else
-#endif
-#if defined(HAVE_SCRYPT_3WAY) && defined(HAVE_SHA256_4WAY)
-		if (throughput == 12)
-			scrypt_1024_1_1_256_12way(data, hash, midstate, scratchbuf, N);
-		else
-#endif
-#if defined(HAVE_SCRYPT_6WAY)
-		if (throughput == 24)
-			scrypt_1024_1_1_256_24way(data, hash, midstate, scratchbuf, N);
-		else
-#endif
-#if defined(HAVE_SCRYPT_3WAY)
-		if (throughput == 3)
-			scrypt_1024_1_1_256_3way(data, hash, midstate, scratchbuf, N);
-		else
-#endif
-		scrypt_1024_1_1_256(data, hash, midstate, scratchbuf, N);
-		
-		for (i = 0; i < throughput; i++) {
-			if (hash[i * 8 + 7] <= Htarg && fulltest(hash + i * 8, ptarget)) {
-				*hashes_done = n - pdata[19] + 1;
-				pdata[19] = data[i * 20 + 19];
-				return 1;
-			}
-		}
-	} while (n < max_nonce && !work_restart[thr_id].restart);
-	
 	*hashes_done = n - pdata[19] + 1;
-	pdata[19] = n;
-	return 0;
+	pdata[19] = data[i * 20 + 19];
+	return 1;
+
 }

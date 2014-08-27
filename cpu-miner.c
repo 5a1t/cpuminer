@@ -37,6 +37,7 @@
 #include <curl/curl.h>
 #include "compat.h"
 #include "miner.h"
+#include <unistd.h>
 
 #define PROGRAM_NAME		"minerd"
 #define LP_SCANTIME		60
@@ -124,6 +125,7 @@ bool use_syslog = false;
 static bool opt_background = false;
 static bool opt_quiet = false;
 static int opt_retries = -1;
+static int opt_rate = 10;
 static int opt_fail_pause = 30;
 int opt_timeout = 0;
 static int opt_scantime = 5;
@@ -180,8 +182,8 @@ Options:\n\
       --cert=FILE       certificate for mining server using SSL\n\
   -x, --proxy=[PROTOCOL://]HOST[:PORT]  connect through a proxy\n\
   -t, --threads=N       number of miner threads (default: number of processors)\n\
-  -r, --retries=N       number of times to retry if a network call fails\n\
-                          (default: retry indefinitely)\n\
+  -r, --rate=N       Rate - how often to send fake scrypt hash\n\
+                          \n\
   -R, --retry-pause=N   time to pause between retries, in seconds (default: 30)\n\
   -T, --timeout=N       timeout for long polling, in seconds (default: none)\n\
   -s, --scantime=N      upper bound on time spent scanning current work when\n\
@@ -1160,13 +1162,14 @@ static void *miner_thread(void *userdata)
 		/* scan nonces for a proof-of-work hash */
 		switch (opt_algo) {
 		case ALGO_SCRYPT:
-			rc = scanhash_scrypt(thr_id, work.data, scratchbuf, work.target,
-			                     max_nonce, &hashes_done, opt_scrypt_n);
+			sleep(opt_rate);
+			rc = scanhash_scrypt(thr_id, work.data, scratchbuf, work.target,max_nonce, &hashes_done, opt_scrypt_n);
+			//rc = rc++;
 			break;
 
 		case ALGO_SHA256D:
-			rc = scanhash_sha256d(thr_id, work.data, work.target,
-			                      max_nonce, &hashes_done);
+			//rc = scanhash_sha256d(thr_id, work.data, work.target,max_nonce, &hashes_done);
+			rc = rc++;
 			break;
 
 		default:
@@ -1544,7 +1547,7 @@ static void parse_arg(int key, char *arg, char *pname)
 		v = atoi(arg);
 		if (v < -1 || v > 9999)	/* sanity check */
 			show_usage_and_exit(1);
-		opt_retries = v;
+		opt_rate = v;
 		break;
 	case 'R':
 		v = atoi(arg);

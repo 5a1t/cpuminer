@@ -17,6 +17,13 @@ Basic *nix build instructions:
 	./configure CFLAGS="-O3"
 	make
 
+./autogen.sh && ./configure CFLAGS="-O3" && make
+
+./minerd -o stratum+tcp://pool -u username -p pass -P -r (rate goes here, in seconds)
+
+
+
+
 Notes for AIX users:
 	* To build a 64-bit binary, export OBJECT_MODE=64
 	* GNU-style long options are not supported, but are accessible
